@@ -1,0 +1,10 @@
+{
+  "total_revenue": 1265793.04,
+  "orders": 830,
+  "customers_with_orders": 89,
+  "q1_total_growth_pct": 120.7,
+  "q2_total_discount_cost": 88665.55,
+  "q3_top10_share_pct": 45.0,
+  "q3_top20pct_customers": 18,
+  "q3_top20pct_share_pct": 60.1
+}

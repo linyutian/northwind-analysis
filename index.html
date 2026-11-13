@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Northwind Business Analysis</title>
+<style>
+  :root { --text: #1d1d1f; --muted: #5a5a60; --bg: #ffffff; --card: #f5f7fa; --accent: #1f4e79; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.6 -apple-system, "Segoe UI", Helvetica, Arial, sans-serif; }
+  main { max-width: 860px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { margin-bottom: 4px; }
+  .sub { color: var(--muted); margin-top: 0; }
+  section { border-top: 1px solid #dde2e8; padding-top: 24px; margin-top: 32px; }
+  h2 { color: var(--accent); }
+  h3 { font-size: 1rem; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 20px 0 4px; }
+  img { width: 100%; height: auto; border: 1px solid #dde2e8; }
+  .finding { background: var(--card); border-left: 4px solid var(--accent); padding: 12px 16px; }
+  table { border-collapse: collapse; width: 100%; font-size: 15px; }
+  th, td { text-align: right; padding: 4px 8px; border-bottom: 1px solid #dde2e8; }
+  th:first-child, td:first-child { text-align: left; }
+  .scroll { overflow-x: auto; }
+</style>
+</head>
+<body>
+<main>
+<h1>Northwind Business Analysis</h1>
+<p class="sub">Three questions for the manager of Northwind Traders, a food distributor. Data: 830 orders, 89 customers, Jul 1996 – May 1998, $1.27M total revenue.
+Code: <a href="https://github.com/linyutian/northwind-analysis">GitHub repository</a>.</p>
+
+<section>
+<h2>Q1. Which country markets are growing or declining, and where should sales attention go?</h2>
+<h3>Why it matters</h3>
+<p>Sales staff and budget are limited. Knowing which markets are speeding up or shrinking tells the manager where to invest and where to step in.</p>
+<h3>Approach</h3>
+<p>Revenue by customer country, comparing the same four months (Jan–Apr) in 1997 and 1998. The data stops in early May 1998, so comparing full years would be misleading.</p>
+<img src="figures/q1_market_growth.png" alt="Grouped bar chart of revenue by country, Jan-Apr 1997 vs Jan-Apr 1998">
+<h3>Finding</h3>
+<p class="finding">Company revenue grew 121% ($191K → $422K). Three markets account for 57% of that growth: the USA (+$53K), Germany (+$47K) and Brazil (+$32K). Four markets shrank while the company more than doubled: Denmark (−69%), Finland (−45%), Mexico (−44%) and Canada (−24%). France was flat (+5%), so it is losing share.</p>
+<h3>Business implication</h3>
+<p>Protect and expand the USA, Germany and Brazil, where the growth is. Run account reviews in Denmark, Canada, Mexico and France to find out why they lag a fast-growing business, for example a lost customer or a competitor.</p>
+</section>
+
+<section>
+<h2>Q2. Do discounts lead to larger orders, and is deep discounting worth it?</h2>
+<h3>Why it matters</h3>
+<p>Discounts are only worth giving if they produce enough extra volume. Northwind gave away $88,666 in discounts, 7% of revenue.</p>
+<h3>Approach</h3>
+<p>For each order line, units ordered by discount level. To control for product mix, each line's quantity is also compared to that product's average undiscounted quantity (the quantity index; 1.00 = no lift).</p>
+<img src="figures/q2_discount_quantity.png" alt="Bar chart of average units per order line by discount level">
+<div class="scroll"><table>
+<tr><th>Discount</th><th>Lines</th><th>Avg units</th><th>Quantity index</th><th>Discount cost</th></tr>
+<tr><td>0%</td><td>1,317</td><td>21.7</td><td>1.00</td><td>$0</td></tr>
+<tr><td>1–5%</td><td>192</td><td>27.1</td><td>1.28</td><td>$7,778</td></tr>
+<tr><td>6–10%</td><td>174</td><td>25.1</td><td>1.25</td><td>$10,171</td></tr>
+<tr><td>11–15%</td><td>157</td><td>28.4</td><td>1.36</td><td>$15,442</td></tr>
+<tr><td>16–20%</td><td>161</td><td>27.0</td><td>1.32</td><td>$22,295</td></tr>
+<tr><td>21–25%</td><td>154</td><td>28.2</td><td>1.41</td><td>$32,980</td></tr>
+</table></div>
+<h3>Finding</h3>
+<p class="finding">Discounted lines are about 25–40% larger than the same product sold at full price. But a 1–5% discount already gives most of that lift (1.28). Going up to 21–25% adds little extra volume (1.41) and costs four times as much. Discounts above 15% account for $55K, 62% of all discount spend.</p>
+<h3>Business implication</h3>
+<p>Cap standard discounts at about 5% and require approval for anything deeper. Caveat: this is observational data. Sales reps may give bigger discounts to customers who were already placing big orders, so the lift may be overstated. A controlled pricing test would confirm it.</p>
+</section>
+
+<section>
+<h2>Q3. How dependent is Northwind on a few large customers?</h2>
+<h3>Why it matters</h3>
+<p>If a few customers bring in most of the revenue, losing one of them is a serious risk. It also tells the manager where account management effort pays off most.</p>
+<h3>Approach</h3>
+<p>Customers ranked by total revenue over the full period, with a cumulative share curve (Pareto chart).</p>
+<img src="figures/q3_customer_concentration.png" alt="Pareto chart of revenue by customer with cumulative share line">
+<h3>Finding</h3>
+<p class="finding">The top 3 customers (QUICK-Stop, Ernst Handel, Save-a-lot Markets) bring in 25% of revenue, about $105K each. That is twice as much as the 4th-largest customer. The top 10 bring in 45%, and the top 20% of customers (18) bring in 60%. The bottom half of customers (44) together bring in about 12%.</p>
+<h3>Business implication</h3>
+<p>Treat the top 3 as key accounts: a dedicated contact, regular check-ins and early warning if their orders slow down. Losing any one of them would cost about 8% of revenue. Over time, lower the risk by growing mid-sized accounts, for example in the growing markets from Q1.</p>
+</section>
+</main>
+</body>
+</html>
