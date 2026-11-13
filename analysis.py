@@ -1,6 +1,7 @@
 """Answer three Northwind business questions with charts and tables.
 
-Run as a script to write figures to ``figures/`` and data to ``outputs/``.
+Run as a script to write figures to ``figures/`` and tables to
+``outputs/``.
 """
 
 import json
