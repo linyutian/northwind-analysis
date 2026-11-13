@@ -1,3 +1,8 @@
+"""Answer three Northwind business questions with charts and tables.
+
+Run as a script to write figures to ``figures/`` and data to ``outputs/``.
+"""
+
 import json
 from pathlib import Path
 
@@ -13,6 +18,16 @@ OUT = Path("outputs")
 
 
 def load_sales(path):
+    """Load order lines joined with order dates and customer details.
+
+    Args:
+        path (str | pathlib.Path): Northwind Excel workbook.
+
+    Returns:
+        pandas.DataFrame: One row per order line with ``OrderDate``,
+        ``CompanyName``, ``Country`` and ``Revenue`` (USD, after
+        discount).
+    """
     sheets = pd.read_excel(path, sheet_name=None)
     orders = sheets["Orders"]
     details = sheets["Orders Details"]
@@ -24,6 +39,19 @@ def load_sales(path):
 
 
 def market_growth(sales):
+    """Compare Jan-Apr revenue by customer country, 1997 vs 1998.
+
+    Writes ``figures/q1_market_growth.png`` and
+    ``outputs/q1_market_growth.csv``; both directories must exist.
+
+    Args:
+        sales (pandas.DataFrame): Order lines from ``load_sales``.
+
+    Returns:
+        pandas.DataFrame: One row per country, sorted by 1998 revenue
+        ascending, with ``1997`` and ``1998`` revenue (USD),
+        ``Change`` (USD) and ``GrowthPct`` (NaN if 1997 revenue is 0).
+    """
     # 1998 data stops in early May, so compare the same Jan-Apr window each year.
     window = sales[sales["OrderDate"].dt.month <= 4]
     by_year = window.pivot_table(
@@ -54,6 +82,21 @@ def market_growth(sales):
 
 
 def discount_effect(sales):
+    """Summarize order size and discount cost by discount level.
+
+    Writes ``figures/q2_discount_quantity.png`` and
+    ``outputs/q2_discount_effect.csv``; both directories must exist.
+
+    Args:
+        sales (pandas.DataFrame): Order lines from ``load_sales``;
+            not modified.
+
+    Returns:
+        pandas.DataFrame: One row per discount level with ``Lines``,
+        ``AvgQuantity`` (units), ``QtyIndex`` (quantity relative to
+        the product's mean undiscounted quantity) and
+        ``DiscountCost`` (USD).
+    """
     bins = [-0.001, 0, 0.05, 0.10, 0.15, 0.20, 0.25]
     labels = ["0%", "1-5%", "6-10%", "11-15%", "16-20%", "21-25%"]
     sales = sales.copy()
@@ -89,6 +132,20 @@ def discount_effect(sales):
 
 
 def customer_concentration(sales):
+    """Rank customers by revenue and compute cumulative revenue share.
+
+    Writes ``figures/q3_customer_concentration.png`` and
+    ``outputs/q3_customer_concentration.csv``; both directories must
+    exist.
+
+    Args:
+        sales (pandas.DataFrame): Order lines from ``load_sales``.
+
+    Returns:
+        pandas.DataFrame: Indexed by company name, highest revenue
+        first, with ``Revenue`` (USD), ``SharePct`` and
+        ``CumulativePct`` (percent of total revenue).
+    """
     by_customer = sales.groupby("CompanyName")["Revenue"].sum().sort_values(ascending=False)
     share = by_customer / by_customer.sum() * 100
     cumulative = share.cumsum()
@@ -113,6 +170,15 @@ def customer_concentration(sales):
 
 
 def main():
+    """Run all three analyses and write the headline summary.
+
+    Args:
+        None.
+
+    Returns:
+        None. Writes figures, CSVs and ``outputs/summary.json``, and
+        prints the summary.
+    """
     FIG.mkdir(exist_ok=True)
     OUT.mkdir(exist_ok=True)
     sales = load_sales(DATA)
