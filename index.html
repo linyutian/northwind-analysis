@@ -32,10 +32,12 @@ Code: <a href="https://github.com/linyutian/northwind-analysis">GitHub repositor
 <h3>Why it matters</h3>
 <p>Sales staff and budget are limited. Knowing which markets are speeding up or shrinking tells the manager where to invest and where to step in.</p>
 <h3>Approach</h3>
-<p>Revenue by customer country, comparing the same four months (Jan–Apr) in 1997 and 1998. The data stops in early May 1998, so comparing full years would be misleading.</p>
+<p>The data covers orders from 4 Jul 1996 to 6 May 1998. Only 1997 is a complete year: 1996 starts in July and 1998 stops after four months. Jan–Apr is the only full period present in both 1997 and 1998, so the analysis compares revenue by customer country for Jan–Apr 1997 against Jan–Apr 1998. Comparing like-for-like months also avoids seasonal effects.</p>
+<p>The first chart shows the size of each market in both periods. The second ranks every market by its dollar change, from biggest gain to biggest loss, and labels each with its % change and how its revenue rank moved. Sorting by change, instead of scanning the bars by eye, separates growing and shrinking markets systematically. When there are more than 30 markets, the chart shows only the 15 biggest gainers and the 15 biggest decliners, so it still works with 200 countries.</p>
 <img src="figures/q1_market_growth.png" alt="Grouped bar chart of revenue by country, Jan-Apr 1997 vs Jan-Apr 1998">
+<img src="figures/q1_market_change.png" alt="Diverging bar chart of revenue change by country with percent change and rank movement labels" style="margin-top:16px">
 <h3>Finding</h3>
-<p class="finding">Company revenue grew 121% ($191K → $422K). Three markets account for 57% of that growth: the USA (+$53K), Germany (+$47K) and Brazil (+$32K). Four markets shrank while the company more than doubled: Denmark (−69%), Finland (−45%), Mexico (−44%) and Canada (−24%). France was flat (+5%), so it is losing share.</p>
+<p class="finding">Company revenue grew 121% ($191K → $422K). Three markets account for 57% of that growth: the USA (+$53K), Germany (+$47K) and Brazil (+$32K, up from rank #7 to #3). Sweden (#17 → #7), Ireland (#12 → #6) and the UK (#9 → #5) also climbed fast. Four markets shrank while the company more than doubled: Denmark (−69%, #6 → #16), Mexico (−44%, #10 → #19), Finland (−45%) and Canada (−24%, #5 → #11). France grew only 5% and fell from #4 to #9: its revenue didn't shrink, but it is losing ground relative to the rest of the business.</p>
 <h3>Business implication</h3>
 <p>Protect and expand the USA, Germany and Brazil, where the growth is. Run account reviews in Denmark, Canada, Mexico and France to find out why they lag a fast-growing business, for example a lost customer or a competitor.</p>
 </section>

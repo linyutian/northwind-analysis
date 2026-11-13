@@ -41,8 +41,9 @@ def load_sales(path):
 def market_growth(sales):
     """Compare Jan-Apr revenue by customer country, 1997 vs 1998.
 
-    Writes ``figures/q1_market_growth.png`` and
-    ``outputs/q1_market_growth.csv``; both directories must exist.
+    Writes ``figures/q1_market_growth.png``,
+    ``figures/q1_market_change.png`` and
+    ``outputs/q1_market_growth.csv``; all directories must exist.
 
     Args:
         sales (pandas.DataFrame): Order lines from ``load_sales``.
@@ -50,7 +51,9 @@ def market_growth(sales):
     Returns:
         pandas.DataFrame: One row per country, sorted by 1998 revenue
         ascending, with ``1997`` and ``1998`` revenue (USD),
-        ``Change`` (USD) and ``GrowthPct`` (NaN if 1997 revenue is 0).
+        ``Change`` (USD), ``GrowthPct`` (NaN if 1997 revenue is 0),
+        ``Rank1997`` and ``Rank1998`` (1 = largest market) and
+        ``RankChange`` (positive = moved up).
     """
     # 1998 data stops in early May, so compare the same Jan-Apr window each year.
     window = sales[sales["OrderDate"].dt.month <= 4]
@@ -63,6 +66,9 @@ def market_growth(sales):
     )[[1997, 1998]]
     by_year["Change"] = by_year[1998] - by_year[1997]
     by_year["GrowthPct"] = by_year["Change"] / by_year[1997].where(by_year[1997] > 0) * 100
+    by_year["Rank1997"] = by_year[1997].rank(ascending=False, method="min").astype(int)
+    by_year["Rank1998"] = by_year[1998].rank(ascending=False, method="min").astype(int)
+    by_year["RankChange"] = by_year["Rank1997"] - by_year["Rank1998"]
     by_year = by_year.sort_values(1998)
 
     fig, ax = plt.subplots(figsize=(9, 8))
@@ -75,6 +81,30 @@ def market_growth(sales):
     ax.legend(loc="lower right")
     fig.tight_layout()
     fig.savefig(FIG / "q1_market_growth.png", dpi=150)
+    plt.close(fig)
+
+    # Rank markets by dollar change so gainers and decliners separate
+    # systematically; with many countries, keep only the 15 at each end.
+    change = by_year.sort_values("Change")
+    if len(change) > 30:
+        change = pd.concat([change.head(15), change.tail(15)])
+    fig, ax = plt.subplots(figsize=(9, 8))
+    colors = ["#2e7d32" if c >= 0 else "#c62828" for c in change["Change"]]
+    ax.barh(change.index, change["Change"] / 1000, color=colors)
+    for i, (country, row) in enumerate(change.iterrows()):
+        pct = "new" if pd.isna(row["GrowthPct"]) else f"{row['GrowthPct']:+.0f}%"
+        label = f"  {pct}, rank #{int(row['Rank1997'])} → #{int(row['Rank1998'])}  "
+        ax.text(row["Change"] / 1000, i, label, va="center", fontsize=8,
+                ha="left" if row["Change"] >= 0 else "right")
+    ax.axvline(0, color="black", linewidth=0.8)
+    # Leave room on both sides for the text labels.
+    lo, hi = min(change["Change"].min(), 0) / 1000, max(change["Change"].max(), 0) / 1000
+    pad = 0.5 * (hi - lo)
+    ax.set_xlim(lo - pad, hi + pad)
+    ax.set_xlabel("Change in revenue, Jan-Apr 1998 vs Jan-Apr 1997 (USD thousands)")
+    ax.set_title("Revenue change by customer country (labels: % change, revenue rank move)")
+    fig.tight_layout()
+    fig.savefig(FIG / "q1_market_change.png", dpi=150)
     plt.close(fig)
 
     by_year.sort_values("Change", ascending=False).round(1).to_csv(OUT / "q1_market_growth.csv")
