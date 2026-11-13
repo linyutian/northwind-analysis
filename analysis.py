@@ -133,8 +133,9 @@ def discount_effect(sales):
         ``AvgDiscount`` (fraction), ``Units``, ``ExpectedUnits``,
         ``ExtraUnits``, ``QtyIndex``, ``BreakEvenRevenue``,
         ``BreakEvenProfit`` (inf if the discount exceeds ``MARGIN``),
-        ``DiscountCost`` (USD), ``CostPerExtraUnit`` (USD) and
-        ``AvgListPrice`` (USD per unit).
+        ``DiscountCost`` (USD), ``CostPerExtraUnit`` (USD),
+        ``AvgListPrice`` (USD per unit) and ``CostPctOfPrice``
+        (cost per extra unit as a percent of its full price).
     """
     bins = [-0.001, 0, 0.05, 0.10, 0.15, 0.20, 0.25]
     labels = ["0%", "1-5%", "6-10%", "11-15%", "16-20%", "21-25%"]
@@ -165,6 +166,7 @@ def discount_effect(sales):
     )
     table["CostPerExtraUnit"] = table["DiscountCost"] / table["ExtraUnits"].where(table["ExtraUnits"] > 0)
     table["AvgListPrice"] = table["ListValue"] / table["Units"]
+    table["CostPctOfPrice"] = table["CostPerExtraUnit"] / table["AvgListPrice"] * 100
     table = table.drop(columns="ListValue")
 
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5.5))
@@ -187,14 +189,15 @@ def discount_effect(sales):
     ax1.set_title("Extra volume won vs. extra volume needed")
     ax1.legend(loc="upper left", fontsize=9)
 
-    ax2.bar(x, table["CostPerExtraUnit"], color="#c62828", label="Discount cost per extra unit")
-    ax2.plot(x, table["AvgListPrice"], "o-", color="#1f4e79", label="Average full price of a unit")
-    for i, v in enumerate(table["CostPerExtraUnit"]):
-        if pd.notna(v):
-            ax2.text(i, v + 0.6, f"${v:.2f}", ha="center", fontsize=9)
-    ax2.set_xticks(x, names)
+    # 0% has no extra units, so it has no cost per extra unit.
+    pct = table["CostPctOfPrice"].dropna()
+    ax2.bar(pct.index.astype(str), pct, color="#1f4e79")
+    ax2.axhline(100, color="#c62828", linewidth=1.5, label="100% = discount costs as much as the unit sells for")
+    for i, v in enumerate(pct):
+        ax2.text(i, v + 2, f"{v:.0f}%", ha="center", fontsize=9)
+    ax2.set_ylim(0, 120)
     ax2.set_xlabel("Discount level")
-    ax2.set_ylabel("USD per unit")
+    ax2.set_ylabel("Discount cost per extra unit, % of its full price")
     ax2.set_title("What each extra unit costs in discounts")
     ax2.legend(loc="upper left", fontsize=9)
     fig.tight_layout()

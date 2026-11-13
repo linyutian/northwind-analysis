@@ -17,7 +17,7 @@ uv pip install -r requirements.txt
 | Output | Used for |
 |---|---|
 | `figures/q1_market_growth.png`, `figures/q1_market_change.png`, `outputs/q1_market_growth.csv` | Q1: country markets growing/declining (revenue, $ change, % change, rank move) |
-| `figures/q2_discount_economics.png`, `outputs/q2_discount_effect.csv` | Q2: do discounts pay off? (quantity index vs revenue/profit break-even, cost per extra unit) |
+| `figures/q2_discount_economics.png`, `outputs/q2_discount_effect.csv` | Q2: do discounts pay off? (quantity index vs revenue/profit break-even, cost per extra unit as % of full price) |
 | `figures/q3_customer_concentration.png`, `outputs/q3_customer_concentration.csv` | Q3: customer concentration risk |
 | `outputs/summary.json` | Headline numbers quoted on the webpage |
 
