@@ -236,6 +236,11 @@ def customer_concentration(sales):
     ax2.plot(ranks, cumulative, color="#c0504d", linewidth=2)
     ax2.set_ylabel("Cumulative share of revenue (%)")
     ax2.set_ylim(0, 105)
+    for n in (3, 10):
+        top = cumulative.iloc[n - 1]
+        ax2.axhline(top, color="#7f7f7f", linestyle=":", linewidth=1.2)
+        ax2.plot(n, top, "o", color="#c0504d")
+        ax2.text(len(by_customer), top + 1.5, f"Top {n} customers: {top:.0f}% of revenue", fontsize=9, ha="right")
     ax.set_title("Customer revenue concentration (Jul 1996 - May 1998)")
     fig.tight_layout()
     fig.savefig(FIG / "q3_customer_concentration.png", dpi=150)
