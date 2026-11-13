@@ -137,11 +137,12 @@ def discount_effect(sales):
             not modified.
 
     Returns:
-        pandas.DataFrame: One row per discount level with ``Lines``,
-        ``AvgDiscount`` (fraction), ``Units``, ``ExpectedUnits``,
-        ``ExtraUnits``, ``QtyIndex``, ``BreakEvenRevenue``,
-        ``BreakEvenProfit`` (inf if the discount exceeds ``MARGIN``),
-        ``DiscountCost`` (USD), ``CostPerExtraUnit`` (USD),
+        pandas.DataFrame: Indexed by discount level label (e.g.
+        ``"21-25%"``), with ``Lines``, ``AvgDiscount`` (fraction),
+        ``Units``, ``ExpectedUnits``, ``ExtraUnits``, ``QtyIndex``,
+        ``BreakEvenRevenue``, ``BreakEvenProfit`` (inf if the
+        discount is at least ``MARGIN``), ``DiscountCost`` (USD),
+        ``CostPerExtraUnit`` (USD; NaN if no extra units),
         ``AvgListPrice`` (USD per unit) and ``CostPctOfPrice``
         (cost per extra unit as a percent of its full price).
     """
@@ -280,7 +281,7 @@ def main():
     n_customers = len(concentration)
     top20 = round(n_customers * 0.2)
     top_growth = growth.sort_values("Change", ascending=False).head(3)
-    deep = discount.loc[["16-20%", "21-25%"], "DiscountCost"].sum()
+    deep = discount.loc[discount["AvgDiscount"] > 0.15, "DiscountCost"].sum()
     summary = {
         "total_revenue": round(sales["Revenue"].sum(), 2),
         "orders": int(sales["OrderID"].nunique()),
