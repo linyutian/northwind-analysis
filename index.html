@@ -47,21 +47,35 @@ Code: <a href="https://github.com/linyutian/northwind-analysis">GitHub repositor
 <h3>Why it matters</h3>
 <p>Discounts are only worth giving if they produce enough extra volume. Northwind gave away $88,666 in discounts, 7% of revenue.</p>
 <h3>Approach</h3>
-<p>For each order line, units ordered by discount level. To control for product mix, each line's quantity is also compared to that product's average undiscounted quantity (the quantity index; 1.00 = no lift).</p>
-<img src="figures/q2_discount_quantity.png" alt="Bar chart of average units per order line by discount level">
+<p><strong>Quantity index.</strong> Some products naturally sell in bigger quantities than others, so raw order size can't be compared across discount levels. Instead, for every order line we ask: how many units does this product usually sell per line at full price? Adding that up over all lines at a discount level gives the <em>expected units</em>. The quantity index is:</p>
+<p style="text-align:center"><strong>Quantity index = units actually sold ÷ units expected at full price</strong></p>
+<p>1.00 means the discount brought no extra volume; 1.33 means 33% more units than the same products usually sell at full price.</p>
+<p><strong>Break-even test.</strong> A discount only pays if the extra volume makes up for the lower price. For an average discount <em>d</em>:</p>
+<ul>
+<li><strong>Revenue break-even</strong> = 1 ÷ (1 − <em>d</em>). For a 25% discount the index must reach 1.33, just to bring in the same revenue.</li>
+<li><strong>Profit break-even</strong> = <em>m</em> ÷ (<em>m</em> − <em>d</em>), where <em>m</em> is the gross margin. A discount comes straight out of the margin, so a 25% discount on a 30% margin leaves only 5 cents of profit per dollar. That needs 6× the volume to earn the same profit. Northwind has no cost data, so a 30% margin (typical for food distribution) is assumed.</li>
+<li><strong>Cost per extra unit</strong> = total discount given ÷ extra units won, compared with what a unit sells for at full price.</li>
+</ul>
+<img src="figures/q2_discount_economics.png" alt="Left: actual quantity index versus revenue and profit break-even by discount level. Right: discount cost per extra unit versus average full price per unit.">
 <div class="scroll"><table>
-<tr><th>Discount</th><th>Lines</th><th>Avg units</th><th>Quantity index</th><th>Discount cost</th></tr>
-<tr><td>0%</td><td>1,317</td><td>21.7</td><td>1.00</td><td>$0</td></tr>
-<tr><td>1–5%</td><td>192</td><td>27.1</td><td>1.28</td><td>$7,778</td></tr>
-<tr><td>6–10%</td><td>174</td><td>25.1</td><td>1.25</td><td>$10,171</td></tr>
-<tr><td>11–15%</td><td>157</td><td>28.4</td><td>1.36</td><td>$15,442</td></tr>
-<tr><td>16–20%</td><td>161</td><td>27.0</td><td>1.32</td><td>$22,295</td></tr>
-<tr><td>21–25%</td><td>154</td><td>28.2</td><td>1.41</td><td>$32,980</td></tr>
+<tr><th>Discount</th><th>Lines</th><th>Quantity index</th><th>Needed: revenue</th><th>Needed: profit (30% margin)</th><th>Discount cost</th><th>Cost per extra unit</th><th>Full price per unit</th></tr>
+<tr><td>0%</td><td>1,317</td><td>1.00</td><td>1.00</td><td>1.00</td><td>$0</td><td>–</td><td>$26.25</td></tr>
+<tr><td>1–5%</td><td>192</td><td>1.25</td><td>1.05</td><td>1.20</td><td>$7,778</td><td>$7.60</td><td>$29.97</td></tr>
+<tr><td>6–10%</td><td>174</td><td>1.18</td><td>1.11</td><td>1.50</td><td>$10,171</td><td>$15.11</td><td>$23.29</td></tr>
+<tr><td>11–15%</td><td>157</td><td>1.31</td><td>1.18</td><td>2.00</td><td>$15,442</td><td>$14.66</td><td>$23.10</td></tr>
+<tr><td>16–20%</td><td>161</td><td>1.28</td><td>1.25</td><td>3.00</td><td>$22,295</td><td>$23.70</td><td>$25.62</td></tr>
+<tr><td>21–25%</td><td>154</td><td>1.33</td><td>1.33</td><td>6.00</td><td>$32,980</td><td>$30.68</td><td>$30.33</td></tr>
 </table></div>
 <h3>Finding</h3>
-<p class="finding">Discounted lines are about 25–40% larger than the same product sold at full price. But a 1–5% discount already gives most of that lift (1.28). Going up to 21–25% adds little extra volume (1.41) and costs four times as much. Discounts above 15% account for $55K, 62% of all discount spend.</p>
+<p class="finding">Every discount level wins extra volume (index 1.18–1.33), but the volume barely changes with the size of the discount: 1.25 at 5% vs 1.33 at 25%. The cost rises steeply: from $7,778 to $32,980, more than four times as much. Deep discounting fails both tests:</p>
+<ul>
+<li><strong>Revenue:</strong> at 21–25% the index (1.328) is slightly below the 1.333 needed to break even. The extra units don't even replace the revenue the discount gives away.</li>
+<li><strong>Profit:</strong> at 21–25% the index would have to be 6.0; the actual 1.33 is far short. Every level above 5% falls short of its profit break-even. Only the 1–5% level clears it (1.25 vs 1.20).</li>
+<li><strong>Cost per extra unit:</strong> at 21–25%, each extra unit costs $30.68 in discounts, more than the $30.33 it sells for at full price. Northwind is effectively giving the extra units away and paying a little on top. At 1–5% an extra unit costs $7.60, about a quarter of its price.</li>
+</ul>
+<p>The conclusion holds for any assumed margin from 20% to 40%. At a 40% margin, 21–25% would need an index of 2.67; at 20% it can never break even. The 5% level is the borderline case: it passes at margins of about 25% or more. Discounts above 15% cost $55K, 62% of all discount spend.</p>
 <h3>Business implication</h3>
-<p>Cap standard discounts at about 5% and require approval for anything deeper. Caveat: this is observational data. Sales reps may give bigger discounts to customers who were already placing big orders, so the lift may be overstated. A controlled pricing test would confirm it.</p>
+<p>Cap standard discounts at about 5% and require approval for anything deeper. Ask for cost data to confirm the actual margin. Caveat: this is observational data. Sales reps may give bigger discounts to customers who were already placing big orders, so even the measured lift may be overstated. That makes deep discounts look, if anything, worse. A controlled pricing test would confirm it.</p>
 </section>
 
 <section>

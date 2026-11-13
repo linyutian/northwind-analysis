@@ -15,6 +15,8 @@ import pandas as pd
 DATA = Path("Northwind Database.xlsx")
 FIG = Path("figures")
 OUT = Path("outputs")
+# Northwind has no cost data; assumed gross margin for the Q2 profit test.
+MARGIN = 0.30
 
 
 def load_sales(path):
@@ -112,9 +114,14 @@ def market_growth(sales):
 
 
 def discount_effect(sales):
-    """Summarize order size and discount cost by discount level.
+    """Test whether each discount level pays for its extra volume.
 
-    Writes ``figures/q2_discount_quantity.png`` and
+    The quantity index is units sold divided by expected units, where
+    expected units are each line's product average quantity on
+    undiscounted lines. Break-even indexes are ``1 / (1 - d)`` for
+    revenue and ``MARGIN / (MARGIN - d)`` for gross profit, with ``d``
+    the level's average discount. Writes
+    ``figures/q2_discount_economics.png`` and
     ``outputs/q2_discount_effect.csv``; both directories must exist.
 
     Args:
@@ -123,38 +130,75 @@ def discount_effect(sales):
 
     Returns:
         pandas.DataFrame: One row per discount level with ``Lines``,
-        ``AvgQuantity`` (units), ``QtyIndex`` (quantity relative to
-        the product's mean undiscounted quantity) and
-        ``DiscountCost`` (USD).
+        ``AvgDiscount`` (fraction), ``Units``, ``ExpectedUnits``,
+        ``ExtraUnits``, ``QtyIndex``, ``BreakEvenRevenue``,
+        ``BreakEvenProfit`` (inf if the discount exceeds ``MARGIN``),
+        ``DiscountCost`` (USD), ``CostPerExtraUnit`` (USD) and
+        ``AvgListPrice`` (USD per unit).
     """
     bins = [-0.001, 0, 0.05, 0.10, 0.15, 0.20, 0.25]
     labels = ["0%", "1-5%", "6-10%", "11-15%", "16-20%", "21-25%"]
     sales = sales.copy()
     # Excel stores e.g. 0.05 as 0.0500001, which would spill into the next bin.
-    sales["DiscountLevel"] = pd.cut(sales["Discount"].round(2), bins=bins, labels=labels)
+    sales["Discount"] = sales["Discount"].round(2)
+    sales["DiscountLevel"] = pd.cut(sales["Discount"], bins=bins, labels=labels)
     sales["ListValue"] = sales["UnitPrice"] * sales["Quantity"]
     sales["DiscountCost"] = sales["ListValue"] - sales["Revenue"]
-    # Compare each line to the same product's undiscounted average quantity,
+    # Expected units = what the same product sells per line at full price,
     # so a discount level is not credited for selling naturally bulkier products.
     base_qty = sales[sales["Discount"] == 0].groupby("ProductID")["Quantity"].mean()
-    sales["QtyIndex"] = sales["Quantity"] / sales["ProductID"].map(base_qty)
+    sales["ExpectedUnits"] = sales["ProductID"].map(base_qty)
 
     table = sales.groupby("DiscountLevel", observed=True).agg(
         Lines=("OrderID", "size"),
-        AvgQuantity=("Quantity", "mean"),
-        QtyIndex=("QtyIndex", "mean"),
+        AvgDiscount=("Discount", "mean"),
+        Units=("Quantity", "sum"),
+        ExpectedUnits=("ExpectedUnits", "sum"),
+        ListValue=("ListValue", "sum"),
         DiscountCost=("DiscountCost", "sum"),
     )
+    table["ExtraUnits"] = table["Units"] - table["ExpectedUnits"]
+    table["QtyIndex"] = table["Units"] / table["ExpectedUnits"]
+    table["BreakEvenRevenue"] = 1 / (1 - table["AvgDiscount"])
+    table["BreakEvenProfit"] = (MARGIN / (MARGIN - table["AvgDiscount"])).where(
+        table["AvgDiscount"] < MARGIN, float("inf")
+    )
+    table["CostPerExtraUnit"] = table["DiscountCost"] / table["ExtraUnits"].where(table["ExtraUnits"] > 0)
+    table["AvgListPrice"] = table["ListValue"] / table["Units"]
+    table = table.drop(columns="ListValue")
 
-    fig, ax = plt.subplots(figsize=(8, 5))
-    bars = ax.bar(table.index.astype(str), table["AvgQuantity"], color="#1f4e79")
-    for bar, n in zip(bars, table["Lines"]):
-        ax.text(bar.get_x() + bar.get_width() / 2, bar.get_height() + 0.5, f"n={n}", ha="center", fontsize=9)
-    ax.set_xlabel("Discount level")
-    ax.set_ylabel("Average units per order line")
-    ax.set_title("Average quantity per order line by discount level")
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5.5))
+    x = list(range(len(table)))
+    names = table.index.astype(str)
+    cap = 3.5
+    ax1.bar(x, table["QtyIndex"], color="#1f4e79", label="Actual quantity index")
+    ax1.plot(x, table["BreakEvenRevenue"], "o--", color="#7f7f7f", label="Needed to break even on revenue")
+    profit = table["BreakEvenProfit"].clip(upper=cap)
+    ax1.plot(x, profit, "s-", color="#c62828", label=f"Needed to break even on profit ({MARGIN:.0%} margin)")
+    for i, (actual, needed) in enumerate(zip(table["QtyIndex"], table["BreakEvenProfit"])):
+        ax1.text(i, actual / 2, f"{actual:.2f}", ha="center", color="white", fontsize=9)
+        if needed > cap:
+            ax1.annotate(f"needs {needed:.1f}" if needed < float("inf") else "never", (i, cap),
+                         xytext=(0, -14), textcoords="offset points", ha="center", color="#c62828", fontsize=9)
+    ax1.set_xticks(x, names)
+    ax1.set_ylim(0, cap + 0.2)
+    ax1.set_xlabel("Discount level")
+    ax1.set_ylabel("Units sold ÷ units expected at full price")
+    ax1.set_title("Extra volume won vs. extra volume needed")
+    ax1.legend(loc="upper left", fontsize=9)
+
+    ax2.bar(x, table["CostPerExtraUnit"], color="#c62828", label="Discount cost per extra unit")
+    ax2.plot(x, table["AvgListPrice"], "o-", color="#1f4e79", label="Average full price of a unit")
+    for i, v in enumerate(table["CostPerExtraUnit"]):
+        if pd.notna(v):
+            ax2.text(i, v + 0.6, f"${v:.2f}", ha="center", fontsize=9)
+    ax2.set_xticks(x, names)
+    ax2.set_xlabel("Discount level")
+    ax2.set_ylabel("USD per unit")
+    ax2.set_title("What each extra unit costs in discounts")
+    ax2.legend(loc="upper left", fontsize=9)
     fig.tight_layout()
-    fig.savefig(FIG / "q2_discount_quantity.png", dpi=150)
+    fig.savefig(FIG / "q2_discount_economics.png", dpi=150)
     plt.close(fig)
 
     table.round(2).to_csv(OUT / "q2_discount_effect.csv")
