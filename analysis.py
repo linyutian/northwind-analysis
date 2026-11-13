@@ -12,9 +12,11 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
 
-DATA = Path("Northwind Database.xlsx")
-FIG = Path("figures")
-OUT = Path("outputs")
+# Paths are relative to this file, so the script runs from any directory.
+ROOT = Path(__file__).resolve().parent
+DATA = ROOT / "Northwind Database.xlsx"
+FIG = ROOT / "figures"
+OUT = ROOT / "outputs"
 # Northwind has no cost data; assumed gross margin for the Q2 profit test.
 MARGIN = 0.30
 
@@ -93,7 +95,7 @@ def market_growth(sales):
     fig, ax = plt.subplots(figsize=(9, 8))
     colors = ["#2e7d32" if c >= 0 else "#c62828" for c in change["Change"]]
     ax.barh(change.index, change["Change"] / 1000, color=colors)
-    for i, (country, row) in enumerate(change.iterrows()):
+    for i, (_, row) in enumerate(change.iterrows()):
         pct = "new" if pd.isna(row["GrowthPct"]) else f"{row['GrowthPct']:+.0f}%"
         label = f"  {pct}, rank #{int(row['Rank1997'])} → #{int(row['Rank1998'])}  "
         ax.text(row["Change"] / 1000, i, label, va="center", fontsize=8,
@@ -270,15 +272,30 @@ def main():
 
     n_customers = len(concentration)
     top20 = round(n_customers * 0.2)
+    top_growth = growth.sort_values("Change", ascending=False).head(3)
+    deep = discount.loc[["16-20%", "21-25%"], "DiscountCost"].sum()
     summary = {
         "total_revenue": round(sales["Revenue"].sum(), 2),
         "orders": int(sales["OrderID"].nunique()),
         "customers_with_orders": n_customers,
+        "first_order_date": str(sales["OrderDate"].min().date()),
+        "last_order_date": str(sales["OrderDate"].max().date()),
+        "q1_revenue_jan_apr_1997": round(growth[1997].sum(), 2),
+        "q1_revenue_jan_apr_1998": round(growth[1998].sum(), 2),
         "q1_total_growth_pct": round((growth[1998].sum() / growth[1997].sum() - 1) * 100, 1),
+        "q1_top3_markets": list(top_growth.index),
+        "q1_top3_share_of_growth_pct": round(top_growth["Change"].sum() / growth["Change"].sum() * 100, 1),
         "q2_total_discount_cost": round(discount["DiscountCost"].sum(), 2),
+        "q2_discount_cost_pct_of_revenue": round(discount["DiscountCost"].sum() / sales["Revenue"].sum() * 100, 1),
+        "q2_discount_cost_above_15pct": round(deep, 2),
+        "q2_above_15pct_share_of_discount_cost_pct": round(deep / discount["DiscountCost"].sum() * 100, 1),
+        "q2_assumed_margin": MARGIN,
+        "q3_top3_share_pct": round(concentration["SharePct"].head(3).sum(), 1),
         "q3_top10_share_pct": round(concentration["SharePct"].head(10).sum(), 1),
         "q3_top20pct_customers": top20,
         "q3_top20pct_share_pct": round(concentration["SharePct"].head(top20).sum(), 1),
+        "q3_bottom_half_customers": n_customers // 2,
+        "q3_bottom_half_share_pct": round(concentration["SharePct"].tail(n_customers // 2).sum(), 1),
     }
     (OUT / "summary.json").write_text(json.dumps(summary, indent=2))
     print(json.dumps(summary, indent=2))

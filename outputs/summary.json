@@ -2,9 +2,26 @@
   "total_revenue": 1265793.04,
   "orders": 830,
   "customers_with_orders": 89,
+  "first_order_date": "1996-07-04",
+  "last_order_date": "1998-05-06",
+  "q1_revenue_jan_apr_1997": 191321.88,
+  "q1_revenue_jan_apr_1998": 422290.24,
   "q1_total_growth_pct": 120.7,
+  "q1_top3_markets": [
+    "USA",
+    "Germany",
+    "Brazil"
+  ],
+  "q1_top3_share_of_growth_pct": 57.3,
   "q2_total_discount_cost": 88665.55,
+  "q2_discount_cost_pct_of_revenue": 7.0,
+  "q2_discount_cost_above_15pct": 55274.8,
+  "q2_above_15pct_share_of_discount_cost_pct": 62.3,
+  "q2_assumed_margin": 0.3,
+  "q3_top3_share_pct": 25.2,
   "q3_top10_share_pct": 45.0,
   "q3_top20pct_customers": 18,
-  "q3_top20pct_share_pct": 60.1
+  "q3_top20pct_share_pct": 60.1,
+  "q3_bottom_half_customers": 44,
+  "q3_bottom_half_share_pct": 11.5
 }
