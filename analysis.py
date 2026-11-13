@@ -12,6 +12,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import pandas as pd
+from matplotlib.patches import Patch
 
 # Paths are relative to this file, so the script runs from any directory.
 ROOT = Path(__file__).resolve().parent
@@ -102,6 +103,10 @@ def market_growth(sales):
         ax.text(row["Change"] / 1000, i, label, va="center", fontsize=8,
                 ha="left" if row["Change"] >= 0 else "right")
     ax.axvline(0, color="black", linewidth=0.8)
+    ax.legend(
+        handles=[Patch(color="#2e7d32", label="Revenue grew"), Patch(color="#c62828", label="Revenue fell")],
+        loc="lower right",
+    )
     # Leave room on both sides for the text labels.
     lo, hi = min(change["Change"].min(), 0) / 1000, max(change["Change"].max(), 0) / 1000
     pad = 0.5 * (hi - lo)
@@ -232,11 +237,12 @@ def customer_concentration(sales):
 
     fig, ax = plt.subplots(figsize=(10, 5))
     ranks = range(1, len(by_customer) + 1)
-    ax.bar(ranks, by_customer / 1000, color="#1f4e79")
-    ax.set_xlabel("Customers ranked by revenue")
+    bars = ax.bar(ranks, by_customer / 1000, color="#1f4e79", label="Revenue per customer (left axis)")
+    ax.set_xlabel("Customers ranked by revenue (1 = largest)")
     ax.set_ylabel("Revenue (USD thousands)")
     ax2 = ax.twinx()
-    ax2.plot(ranks, cumulative, color="#c0504d", linewidth=2)
+    (line,) = ax2.plot(ranks, cumulative, color="#c0504d", linewidth=2, label="Cumulative share of revenue (right axis)")
+    ax2.legend(handles=[bars, line], loc="center right", bbox_to_anchor=(0.99, 0.68))
     ax2.set_ylabel("Cumulative share of revenue (%)")
     ax2.set_ylim(0, 105)
     for n in (3, 10):
